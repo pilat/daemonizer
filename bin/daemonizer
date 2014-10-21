@@ -1,0 +1,37 @@
+#!/usr/bin/env php
+<?php
+
+use Brainfit\Daemonizer\Command\Master;
+use Brainfit\Daemonizer\Command\Start;
+use Brainfit\Daemonizer\Command\Stop;
+use Symfony\Component\Console\Application;
+
+error_reporting(E_ALL ^ E_NOTICE);
+
+function includeIfExists($file)
+{
+    if(file_exists($file))
+        return include $file;
+}
+
+if($loader = includeIfExists(__DIR__.'/../vendor/autoload.php'))
+    define('ROOT', dirname(__FILE__).'/../');
+else if($loader = includeIfExists(__DIR__.'/../../../autoload.php'))
+    define('ROOT', dirname(__FILE__).'/../../../../');
+else
+{
+    die(
+        'You must set up the project dependencies, run the following commands:'.PHP_EOL.
+        'curl -s http://getcomposer.org/installer | php'.PHP_EOL.
+        'php composer.phar install'.PHP_EOL
+    );
+}
+
+define('DAEMON_FILE', 'bin/daemonizer');// __FILE__);
+define('DAEMON_CWD', getcwd());
+
+$application = new Application();
+$application->add(new Master);
+$application->add(new Start);
+$application->add(new Stop);
+$application->run();

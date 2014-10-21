@@ -1,0 +1,6 @@
+.DS_STORE
+.idea
+
+/nbproject/
+/vendor/
+/log.log
