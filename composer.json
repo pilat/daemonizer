@@ -1,7 +1,9 @@
 {
     "name": "pilat/daemonizer",
     "description": "PHP Daemonizer",
-    "type": "project",
+    "license": "MIT",
+    "type": "library",
+    "keywords": ["php", "daemon", "reactphp"],
     "authors": [
         {
             "name": "Vladimir Urushev",
