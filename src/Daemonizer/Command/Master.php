@@ -32,6 +32,8 @@ class Master extends Command
         {
             $id = $input->getOption('id');
 
+            DaemonUtils::configCheck();
+
             $daemons = DaemonUtils::getDaemonsFromConfig();
 
             file_put_contents(DaemonUtils::getPidFilename(), getmypid() . ',' . $id);

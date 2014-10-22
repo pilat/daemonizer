@@ -17,16 +17,27 @@ class DaemonUtils
 
     public static function getPidFilename()
     {
-        return getcwd() . '/daemonizer.pid';
+        return sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'daemonizer.pid';
     }
 
-    public static function configCheck(InputInterface $input)
+    public static function configCheck()
     {
         if(!defined('DAEMON_FILE') || !DAEMON_FILE || !file_exists(DAEMON_FILE))
             throw new \RuntimeException('Not defined DAEMON_FILE');
 
         if(!defined('DAEMON_CWD') || !DAEMON_CWD)
             throw new \RuntimeException('Not defined DAEMON_CWD');
+
+        if(DaemonUtils::checkPidFile() !== false)
+            throw new \Exception('Daemon already running');
+
+        //writable-test
+        @file_put_contents(self::getPidFilename(), 'test');
+
+        if (@file_get_contents(self::getPidFilename()) != 'test')
+            throw new \RuntimeException('Pid file is not writable ['.self::getPidFilename().']');
+
+        @unlink(self::getPidFilename());
     }
 
     public static function getDaemonsFromConfig()

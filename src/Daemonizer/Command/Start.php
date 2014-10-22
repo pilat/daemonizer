@@ -36,9 +36,7 @@ class Start extends Command
                         . 'sudo using --allow-root option');
             }
 
-            if(DaemonUtils::checkPidFile() !== false)
-                throw new \Exception('Daemon already running');
-
+            DaemonUtils::configCheck();
 
             //Check daemons
             $daemons = DaemonUtils::getDaemonsFromConfig();
