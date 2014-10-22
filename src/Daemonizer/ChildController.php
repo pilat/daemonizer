@@ -42,6 +42,9 @@ class ChildController implements ChildControllerInterface
 
     public function run()
     {
+        if (function_exists('cli_set_process_title'))
+            cli_set_process_title('php daemonizer '.escapeshellarg(get_class($this->daemon)));
+        
         $this->loop->run();
     }
 
