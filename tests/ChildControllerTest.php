@@ -177,10 +177,8 @@ class ChildControllerTest extends \PHPUnit_Framework_TestCase
 
     private function limitedLoop($timeout = 5)
     {
-        $self = $this->loop;
-
-        $this->loop->addTimer($timeout, function() use ($self) {
-            $self->stop();
+        $this->loop->addTimer($timeout, function(){
+            $this->loop->stop();
         });
     }
 }
