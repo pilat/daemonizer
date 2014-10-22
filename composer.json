@@ -1,7 +1,9 @@
 {
     "name": "pilat/daemonizer",
     "description": "PHP Daemonizer",
-    "type": "project",
+    "license": "MIT",
+    "type": "library",
+    "keywords": ["php", "daemon", "reactphp"],
     "authors": [
         {
             "name": "Vladimir Urushev",
@@ -10,6 +12,7 @@
     ],
     "require": {
         "php":">=5.3.0",
+        "ext-pcntl": "*",
         "symfony/console": "2.5.5",
         "react/react": "0.4.*",
         "mtdowling/cron-expression": "1.0.*"
