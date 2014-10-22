@@ -2,7 +2,9 @@
 
 Provide simple way for creating long-running php daemons.
 
-#### How use:
+[![Build Status](https://travis-ci.org/pilat/daemonizer.svg)](https://travis-ci.org/pilat/daemonizer)
+
+#### How it use:
 * Your class must implement "DaemonizerInterface" interface.
 * Create cli-daemonizer.php file in config or root directory
 * Start daemon, use command ./bin/daemonizer start
