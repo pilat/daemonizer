@@ -2,6 +2,7 @@
 
 namespace Brainfit\Daemonizer\Command;
 
+use Brainfit\Daemonizer\DaemonizerInterface;
 use Brainfit\Daemonizer\DaemonUtils;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -37,6 +38,18 @@ class Start extends Command
 
             if(DaemonUtils::checkPidFile() !== false)
                 throw new \Exception('Daemon already running');
+
+
+            //Check daemons
+            $daemons = DaemonUtils::getDaemonsFromConfig();
+            foreach ($daemons as $daemon)
+            {
+                if(!$daemon instanceof DaemonizerInterface)
+                    throw new \Exception('Invalid [cli-daemonizer.php] file: file contain not-implementer ' .
+                        'DaemonizerInterface class');
+
+                DaemonUtils::checkScheduleItem($daemon->getSchedule(), get_class($daemon));
+            }
 
             $id = mt_rand(1, 100000);
             shell_exec(DAEMON_FILE . " internal:master --id={$id} > /dev/null 2>&1 &");

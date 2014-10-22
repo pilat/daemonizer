@@ -32,28 +32,7 @@ class Master extends Command
         {
             $id = $input->getOption('id');
 
-            $directories = array(getcwd(), getcwd() . DIRECTORY_SEPARATOR . 'config');
-
-            $configFile = null;
-            foreach ($directories as $directory)
-            {
-                $configFile = $directory . DIRECTORY_SEPARATOR . 'cli-daemonizer.php';
-
-                if(file_exists($configFile))
-                    break;
-            }
-
-            if(!file_exists($configFile))
-                throw new \Exception('Configuration file not exist. Create [cli-daemonizer.php] file');
-
-            if(!is_readable($configFile))
-                throw new \Exception('Configuration file [' . $configFile . '] does not have read permission.');
-
-            $daemons = require $configFile;
-
-            if(!$daemons || count($daemons) < 1)
-                throw new \Exception('Invalid [cli-daemonizer.php] file: file must return array of classes ' .
-                    'implementing DaemonizerInterface');
+            $daemons = DaemonUtils::getDaemonsFromConfig();
 
             file_put_contents(DaemonUtils::getPidFilename(), getmypid() . ',' . $id);
 
