@@ -5,29 +5,27 @@ namespace Brainfit\Examples;
 use Brainfit\Daemonizer\DaemonizerInterface;
 use React\EventLoop\LoopInterface;
 
-class CronJobExample implements DaemonizerInterface
+class HourlyJobExample implements DaemonizerInterface
 {
     public function getSchedule()
     {
-        //Cron-liked style: "m h dom mon dow"
-        //See https://github.com/mtdowling/cron-expression
-
-        return '* * * * *';
+        //hours
+        return array(1, 2, 3, 4, 5, 10, 12, 15, 19, 23);
     }
 
     public function bootstrap(LoopInterface $loop)
     {
-        $this->demoLogger('Bootstrap CronJobExample');
+        $this->demoLogger('Bootstrap HourlyJobExample');
     }
 
     public function run()
     {
-        $this->demoLogger('Run CronJobExample (every minute)');
+        $this->demoLogger('Run HourlyJobExample (hourly)');
     }
 
     public function terminate()
     {
-        $this->demoLogger('Terminate CronJobExample');
+        $this->demoLogger('Terminate HourlyJobExample');
     }
 
     private function demoLogger($message)

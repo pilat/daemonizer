@@ -2,6 +2,7 @@
 
 namespace Brainfit\Daemonizer\Command;
 
+use Brainfit\Daemonizer\ChildController;
 use Brainfit\Daemonizer\DaemonUtils;
 use Brainfit\Daemonizer\DaemonizerInterface;
 use Brainfit\Daemonizer\MasterController;
@@ -56,15 +57,19 @@ class Master extends Command
 
             file_put_contents(DaemonUtils::getPidFilename(), getmypid() . ',' . $id);
 
-            $handler = new MasterController();
+            $loop = \React\EventLoop\Factory::create();
+
+            $master = new MasterController($loop, new ChildController);
             foreach ($daemons as $daemon)
             {
                 if(!$daemon instanceof DaemonizerInterface)
                     throw new \Exception('Invalid [cli-daemonizer.php] file: file contain not-implementer ' .
                         'DaemonizerInterface class');
-                $handler->attach($daemon);
+                $master->attach($daemon);
             }
-            $handler->run();
+            $master->start();
+
+            $loop->run();
         }
         catch (\Exception $e)
         {

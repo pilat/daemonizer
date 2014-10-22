@@ -1,9 +1,10 @@
 <?php
 namespace Brainfit\Daemonizer;
 
+use Cron\CronExpression;
 use React\EventLoop\LoopInterface;
 
-class ChildController
+class ChildController implements ChildControllerInterface
 {
     /** @var DaemonizerInterface */
     private $daemon;
@@ -13,16 +14,14 @@ class ChildController
 
     private $schedule;
 
-    private $prevExecuteTime;
+    private $previousTime;
 
-    public function __construct(DaemonizerInterface $daemon)
+    /** @var  CronExpression */
+    private $cronExpression;
+
+    public function init(LoopInterface $loop = null)
     {
-        $this->daemon = $daemon;
-
-        $this->loop = \React\EventLoop\Factory::create();
-
-        $this->schedule = $this->daemon->getSchedule();
-        $this->daemon->bootstrap($this->loop);
+        $this->loop = is_null($loop) ? \React\EventLoop\Factory::create() : $loop;
 
         $this->loop->addPeriodicTimer(0.1, array($this, 'checkSchedule'));
 
@@ -31,56 +30,91 @@ class ChildController
         {
             pcntl_signal_dispatch();
         });
+    }
 
+    public function attach(DaemonizerInterface $daemon)
+    {
+        $this->daemon = $daemon;
+
+        $this->schedule = $this->daemon->getSchedule();
+        $this->daemon->bootstrap($this->loop);
+    }
+
+    public function run()
+    {
         $this->loop->run();
     }
 
     private function bindSignals()
     {
-        pcntl_signal(SIGTERM, array($this, "sigHandler"));
-        pcntl_signal(SIGINT, array($this, "sigHandler"));
+        pcntl_signal(SIGTERM, array($this, "terminate"));
+        pcntl_signal(SIGINT, array($this, "terminate"));
     }
 
-    public function sigHandler()
+    public function terminate()
     {
+        $this->loop->stop();
         $this->daemon->terminate();
-        exit;
+        die;
     }
 
 
     public function checkSchedule()
     {
-        $iTime = intval(microtime(true));
-        $iHour = date('G');
+        $timestamp = microtime(true);
+        $hour = date('G');
 
         if(is_numeric($this->schedule))
         {
             //If you need to perform at intervals, then check to see whether early to perform
-            if(isset($this->prevExecuteTime) && $this->prevExecuteTime + $this->schedule > $iTime)
+            if(isset($this->previousTime) && $timestamp <= $this->previousTime + $this->schedule)
                 return;
 
-            $this->prevExecuteTime = $iTime;
+            $this->previousTime = $timestamp;
         }
         else if(is_array($this->schedule))
         {
-            //If you need to perform on the clock, then check whether it is time to perform
-            if(isset($this->prevExecuteTime) && ($this->prevExecuteTime == $iHour
-                    || !in_array($iHour, $this->schedule))
-            )
+            if((isset($this->previousTime) && $this->previousTime == $hour) || !in_array($hour, $this->schedule))
                 return;
 
-            $this->prevExecuteTime = $iHour;
+            $this->previousTime = $hour;
+        }
+        else if (is_string($this->schedule))
+        {
+            $nextRunDate = false;
+
+            try
+            {
+                //See https://github.com/mtdowling/cron-expression
+                if (!isset($this->cronExpression))
+                    $this->cronExpression = CronExpression::factory($this->schedule);
+
+                $nextRunDate = $this->cronExpression->getNextRunDate();
+            }catch (\Exception $e)
+            {
+                $this->terminate();
+            }
+
+            //first step always skipped
+            if (!isset($this->previousTime))
+                $this->previousTime = $nextRunDate;
+
+            if ($this->previousTime == $nextRunDate)
+                return;
+
+            $this->previousTime = $nextRunDate;
+
         }
         else
         {
             //once
-            if(isset($this->prevExecuteTime))
+            if(isset($this->previousTime))
                 return;
 
-            $this->prevExecuteTime = true;
+            $this->previousTime = true;
         }
 
-
+        //execute daemon now
         $this->daemon->run();
     }
 }
