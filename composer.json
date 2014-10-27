@@ -17,6 +17,9 @@
         "react/react": "0.4.*",
         "mtdowling/cron-expression": "1.0.*"
     },
+    "require-dev": {
+        "phpunit/phpunit": "3.7.*"
+    },
     "autoload": {
         "psr-4": {
             "Brainfit\\": "src"

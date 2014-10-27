@@ -16,7 +16,7 @@ class ChildControllerTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        if(!defined('PHPUNIT_TEST'))
+        if (!defined('PHPUNIT_TEST'))
             define('PHPUNIT_TEST', true);
 
         $this->loop = $this->createLoop();
@@ -80,7 +80,7 @@ class ChildControllerTest extends \PHPUnit_Framework_TestCase
         $mock->expects($this->once())
             ->method('getSchedule')
             ->will($this->returnValue(
-                array($currentHour != 0 ? $currentHour-1 : $currentHour+1, $currentHour)
+                array($currentHour != 0 ? $currentHour - 1 : $currentHour + 1, $currentHour)
             ));
 
         $mock->expects($this->once())
@@ -102,11 +102,31 @@ class ChildControllerTest extends \PHPUnit_Framework_TestCase
         $mock->expects($this->once())
             ->method('getSchedule')
             ->will($this->returnValue(
-                $minute.' * * * *'
+                $minute . ' * * * *'
             ));
 
         $mock->expects($this->never())
             ->method('run');
+
+        $this->caseHelper($mock);
+    }
+
+    public function testChildExceptionInJob()
+    {
+        /** @var PHPUnit_Framework_MockObject_MockObject|DaemonizerInterface $mock */
+        $mock = $this->getMock('\Brainfit\Examples\ExceptionInJob');
+
+        //non-current minute
+        $mock->expects($this->once())
+            ->method('getSchedule')
+            ->will($this->returnValue(1));
+
+        $mock->expects($this->once())
+            ->method('run')
+            ->will($this->throwException(new Exception('Test exception', 1)));
+
+        $mock->expects($this->once())
+            ->method('terminate');
 
         $this->caseHelper($mock);
     }
@@ -177,7 +197,8 @@ class ChildControllerTest extends \PHPUnit_Framework_TestCase
 
     private function limitedLoop($timeout = 5)
     {
-        $this->loop->addTimer($timeout, function(){
+        $this->loop->addTimer($timeout, function ()
+        {
             $this->loop->stop();
         });
     }

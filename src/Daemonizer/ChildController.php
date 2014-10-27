@@ -47,15 +47,22 @@ class ChildController implements ChildControllerInterface
 
     private function bindSignals()
     {
-        pcntl_signal(SIGTERM, array($this, "terminate"));
-        pcntl_signal(SIGINT, array($this, "terminate"));
+        pcntl_signal(SIGTERM, [$this, "terminate"]);
+        pcntl_signal(SIGINT, [$this, "terminate"]);
     }
 
     public function terminate()
     {
         $this->loop->stop();
         $this->daemon->terminate();
-        die;
+
+        // @codeCoverageIgnoreStart
+        if (!defined('PHPUNIT_TEST'))
+            define('PHPUNIT_TEST', false);
+        // @codeCoverageIgnoreEnd
+
+        if (!PHPUNIT_TEST)
+            die;
     }
 
 
@@ -64,17 +71,17 @@ class ChildController implements ChildControllerInterface
         $timestamp = microtime(true);
         $hour = date('G');
 
-        if(is_numeric($this->schedule))
+        if (is_numeric($this->schedule))
         {
             //If you need to perform at intervals, then check to see whether early to perform
-            if(isset($this->previousTime) && $timestamp <= $this->previousTime + $this->schedule)
+            if (isset($this->previousTime) && $timestamp <= $this->previousTime + $this->schedule)
                 return;
 
             $this->previousTime = $timestamp;
         }
-        else if(is_array($this->schedule))
+        else if (is_array($this->schedule))
         {
-            if((isset($this->previousTime) && $this->previousTime == $hour) || !in_array($hour, $this->schedule))
+            if ((isset($this->previousTime) && $this->previousTime == $hour) || !in_array($hour, $this->schedule))
                 return;
 
             $this->previousTime = $hour;
@@ -90,7 +97,7 @@ class ChildController implements ChildControllerInterface
                     $this->cronExpression = CronExpression::factory($this->schedule);
 
                 $nextRunDate = $this->cronExpression->getNextRunDate();
-            }catch (\Exception $e)
+            } catch (\Exception $e)
             {
                 $this->terminate();
             }
@@ -108,13 +115,20 @@ class ChildController implements ChildControllerInterface
         else
         {
             //once
-            if(isset($this->previousTime))
+            if (isset($this->previousTime))
                 return;
 
             $this->previousTime = true;
         }
 
         //execute daemon now
-        $this->daemon->run();
+
+        try
+        {
+            $this->daemon->run();
+        } catch (\Exception $e)
+        {
+            $this->terminate();
+        }
     }
 }
